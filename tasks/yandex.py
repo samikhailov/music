@@ -1,3 +1,4 @@
+import os
 import json
 import requests
 from yandex_music.client import Client
@@ -8,8 +9,9 @@ def get_client():
     Метод авторизации в yandex music.
     :return: объект класса Client.
     """
+    path = os.path.dirname(os.path.abspath(__file__))
     try:
-        with open("credentials_yandex.json", "r") as f:
+        with open(os.path.join(path, "credentials_yandex.json"), "r") as f:
             credentials = json.load(f)
         client = Client.from_token(credentials["token"])
     except:
@@ -18,6 +20,13 @@ def get_client():
         with open("credentials_yandex.json", "w") as f:
             json.dump(credentials, f)
     return client
+
+
+def get_yandex_id(artist, title):
+    client = get_client()
+    request = client.search(f"{artist} {title}")
+    print(f"Updated. yandex_id: {request.best.result.id}, {artist} - {title}")
+    return str(request.best.result.id)
 
 
 def get_chart_info():

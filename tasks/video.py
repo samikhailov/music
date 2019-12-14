@@ -29,12 +29,12 @@ def set_requirements(in_stream):
     return ffmpeg.concat(vid, aud, v=1, a=1)
 
 
-def draw_titles(artist, song, blank_img, font):
+def draw_titles(artist, title, blank_img, font):
     output_stream = (
         ffmpeg
-        .input(blank_img, loop=1, t="00:04")
+        .input(blank_img, loop=1, t="00:05")
         .drawtext(text=artist, x=200, y=800, fontsize=56, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
-        .drawtext(text=song, x=200, y=880, fontsize=44, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
+        .drawtext(text=title, x=200, y=880, fontsize=44, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
     )
 
     return output_stream
@@ -42,24 +42,24 @@ def draw_titles(artist, song, blank_img, font):
 
 def create_cut(full_video, cut_video, row, blank_img, font):
     if os.path.exists(cut_video) is False:
-        start = 40
+        start = "1:20"
         duration = 8
         stream = ffmpeg.input(full_video, ss=start, t=duration)
         stream = set_requirements(stream)
-        titles = draw_titles(row["artist"], row["song"], blank_img, font).setpts("PTS-STARTPTS+40")
+        titles = draw_titles(row["artist"], row["title"], blank_img, font).setpts("PTS-STARTPTS+40")
         stream = ffmpeg.overlay(stream, titles, eof_action="pass").setpts("PTS-STARTPTS")
         output = ffmpeg.output(stream, cut_video)
         output.run()
 
 
-def create_transition(transition_video, rank, blank_img, silence_audio, font):
+def create_transition(transition_video, position, blank_img, silence_audio, font):
     if os.path.exists(transition_video) is False:
         duration = 1
 
         video_stream = ffmpeg.input(blank_img, loop=1, t=duration)
         vid = (
             video_stream.video
-            .drawtext(text=rank, x="(w-text_w)/2", y="(h-text_h)/2", fontsize=160, fontfile=font)
+            .drawtext(text=position, x="(w-text_w)/2", y="(h-text_h)/2", fontsize=160, fontfile=font)
         )
 
         audio_stream = ffmpeg.input(silence_audio, t=duration)
