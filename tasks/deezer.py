@@ -15,7 +15,7 @@ def get_deezer_id(artist, title):
             result *= -1
     else:
         result = data["data"][0]["id"]
-    print(f'GET deezer_id: {result}, {artist} - {title}')
+    print(f'deezer.get_deezer_id("{artist}", "{title}"): {result}, ')
     return result
 
 
@@ -34,7 +34,7 @@ def get_artists(deezer_id):
         for row in data["contributors"]:
             artist.append(row["name"])
         artist = ", ".join(artist)
-        print(f'GET deezer artist: {artist}')
+        print(f'deezer.get_artists({deezer_id}): "{artist}"')
     return artist
 
 
@@ -49,9 +49,6 @@ def get_chart_info():
         chart[-1]["title"] = track["title"]
         chart[-1]["artist"] = get_artists(track["id"])
         chart[-1]["position"] = len(chart)
-        chart[-1]["point"] = int(100 / len(chart))
-
-    with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
-        json.dump(chart, f)
+        chart[-1]["point"] = int(1000 / len(chart))
 
     return chart

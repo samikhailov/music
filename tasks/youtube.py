@@ -18,5 +18,5 @@ def get_youtube_id(artist, title):
         result = ""
     else:
         result = data["items"][0]["id"]["videoId"]
-        print(f"GET youtube_id: {result}, {artist} - {title}")
+        print(f'youtube.get_youtube_id("{artist}", "{title}"): {result}')
     return result
