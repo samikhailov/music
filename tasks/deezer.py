@@ -23,16 +23,16 @@ def get_artists(deezer_id):
     return ", ".join(artists)
 
 
-def get_chart_info():
+def get_chart_info(amount_pos):
     url = "https://api.deezer.com/playlist/1116189381"
     response = requests.get(url)
     data = json.loads(response.text)
     chart = []
-    for track in data["tracks"]["data"]:
+    for track in data["tracks"]["data"][:amount_pos]:
         chart.append({})
         chart[-1]["deezer_id"] = track["id"]
         chart[-1]["title"] = track["title"]
-        # chart[-1]["artist"] = ", ".join([i["name"] for i in track["artists"]])
+        chart[-1]["artist"] = get_artists(track["id"])
         chart[-1]["position"] = len(chart)
 
     return chart

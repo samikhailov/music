@@ -29,7 +29,7 @@ def get_yandex_id(artist, title):
     return str(request.best.result.id)
 
 
-def get_chart_info():
+def get_chart_info(amount_pos):
     """
     Метод получения списка лучших треков.
     :return: список словарей, с 4 ключами: yandex_id, title, artist, position.
@@ -40,7 +40,7 @@ def get_chart_info():
     response = requests.get(url)
     data = json.loads(response.text)
     chart = []
-    for track in data["chart"]["tracks"]:
+    for track in data["chart"]["tracks"][:amount_pos]:
         chart.append({})
         chart[-1]["yandex_id"] = track["id"]
         chart[-1]["title"] = track["title"]
