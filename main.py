@@ -1,10 +1,9 @@
 import os
 import json
-import datetime
+from datetime import datetime
 from settings import STATIC_DIR, FULL_VIDEOS_DIR, CUT_VIDEOS_DIR, TRANSITION_VIDEOS_DIR, IMG_DIR,\
     FONTS_DIR, CONTENT_DIR, TS_CUT_VIDEOS_DIR, SOUND_DIR, TS_TRANSITION_VIDEOS_DIR
-
-from tasks import video, base
+from tasks import video, base, youtube
 
 
 def create_video(chart_dict):
@@ -45,28 +44,44 @@ def create_video(chart_dict):
     video.concat(concat_list, CONTENT_DIR)
 
 
-def get_chart_dict(amount_pos=20):
+def get_chart_dict(amount_pos, chart=None):
     with open(f"{os.path.join(STATIC_DIR, 'music_base.json')}", "r", encoding="utf-8") as f:
         music_base = json.load(f)
 
-    # with open(f"static/music_base {datetime.datetime.today().date().isoformat()}.json", "w", encoding="utf-8") as f:
-    #     json.dump(music_base, f)
+    if chart is None:
+        chart = base.get_general_chart()
 
-    chart = base.calc_chart(amount_pos)
+    # Добавление youtube_id в chart
+    for chart_row in chart[:amount_pos]:
+        for music_base_row in music_base:
+            if chart_row["yandex_id"] == music_base_row["yandex_id"]:
+                if music_base_row.get("youtube_id") is None or music_base_row.get("youtube_id") == "":
+                    chart_row["youtube_id"] = youtube.get_youtube_id(chart_row["artist"], chart_row["title"])
+                else:
+                    chart_row["youtube_id"] = music_base_row["youtube_id"]
+                break
+
     music_base = base.append_music_base(music_base, chart)
-    music_base = base.update_music_base(music_base)
-    chart = base.update_chart(music_base, chart)
 
     with open("static/music_base.json", "w", encoding="utf-8") as f:
         json.dump(music_base, f)
 
-    with open(f"static/chart {datetime.datetime.today().isoformat()}.json", "w", encoding="utf-8") as f:
+    with open(f'static/chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8") as f:
         json.dump(chart, f)
 
     return chart
 
 
+def main():
+    amount_pos = 25
+    with open("static/general_chart 19-12-15 18-41-43.json", "r", encoding="utf-8") as f:
+        chart = json.load(f)
+    chart = get_chart_dict(amount_pos, chart)
+    chart = chart[:amount_pos]
+    chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
+    create_video(chart)
+
+
 if __name__ == "__main__":
-    # chart = get_chart_dict()
-    # create_video(chart)
-    pass
+    main()
+

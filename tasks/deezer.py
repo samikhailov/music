@@ -1,6 +1,7 @@
 import json
 import urllib
 import requests
+from datetime import datetime
 
 
 def get_deezer_id(artist, title):
@@ -8,8 +9,14 @@ def get_deezer_id(artist, title):
     url = f"https://api.deezer.com/search?q={search_req}"
     response = requests.get(url)
     data = json.loads(response.text)
-    print(f'GET deezer_id: {data["data"][0]["id"]}, {artist} - {title}')
-    return data["data"][0]["id"]
+    if data["total"] == 0:
+        result = hash(f"{artist} {title}")
+        if result > 0:
+            result *= -1
+    else:
+        result = data["data"][0]["id"]
+    print(f'GET deezer_id: {result}, {artist} - {title}')
+    return result
 
 
 def get_artists(deezer_id):
@@ -26,21 +33,25 @@ def get_artists(deezer_id):
         artist = []
         for row in data["contributors"]:
             artist.append(row["name"])
-        artist_str = ", ".join(artist)
-        print(f'GET deezer artist: {artist_str}')
+        artist = ", ".join(artist)
+        print(f'GET deezer artist: {artist}')
     return artist
 
 
-def get_chart_info(amount_pos=20):
+def get_chart_info():
     url = "https://api.deezer.com/playlist/1116189381"
     response = requests.get(url)
     data = json.loads(response.text)
     chart = []
-    for track in data["tracks"]["data"][:amount_pos]:
+    for track in data["tracks"]["data"]:
         chart.append({})
         chart[-1]["deezer_id"] = track["id"]
         chart[-1]["title"] = track["title"]
         chart[-1]["artist"] = get_artists(track["id"])
         chart[-1]["position"] = len(chart)
+        chart[-1]["point"] = int(100 / len(chart))
+
+    with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+        json.dump(chart, f)
 
     return chart

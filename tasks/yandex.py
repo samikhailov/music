@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from yandex_music.client import Client
+from datetime import datetime
 
 
 def get_client():
@@ -29,7 +30,7 @@ def get_yandex_id(artist, title):
     return str(request.best.result.id)
 
 
-def get_chart_info(amount_pos=20):
+def get_chart_info():
     """
     Метод получения списка лучших треков.
     :return: список словарей, с 4 ключами: yandex_id, title, artist, position.
@@ -40,11 +41,15 @@ def get_chart_info(amount_pos=20):
     response = requests.get(url)
     data = json.loads(response.text)
     chart = []
-    for track in data["chart"]["tracks"][:amount_pos]:
+    for track in data["chart"]["tracks"]:
         chart.append({})
         chart[-1]["yandex_id"] = track["id"]
         chart[-1]["title"] = track["title"]
         chart[-1]["artist"] = ", ".join([i["name"] for i in track["artists"]])
         chart[-1]["position"] = track["chart"]["position"]
+        chart[-1]["point"] = int(100 / track["chart"]["position"])
+
+    with open(f'static/yandex_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+        json.dump(chart, f)
 
     return chart
