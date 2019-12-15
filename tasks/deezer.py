@@ -13,17 +13,25 @@ def get_deezer_id(artist, title):
 
 
 def get_artists(deezer_id):
-    url = f"https://api.deezer.com/track/{deezer_id}"
-    response = requests.get(url)
-    data = json.loads(response.text)
-    artists = []
-    for row in data["contributors"]:
-        artists.append(row["name"])
+    with open("static/music_base.json", "r", encoding="utf-8") as f:
+        base = json.load(f)
+    for row in base:
+        if row["deezer_id"] == deezer_id:
+            artist = row["artist"]
+            break
+    else:
+        url = f"https://api.deezer.com/track/{deezer_id}"
+        response = requests.get(url)
+        data = json.loads(response.text)
+        artist = []
+        for row in data["contributors"]:
+            artist.append(row["name"])
+        artist_str = ", ".join(artist)
+        print(f'GET deezer artist: {artist_str}')
+    return artist
 
-    return ", ".join(artists)
 
-
-def get_chart_info(amount_pos):
+def get_chart_info(amount_pos=20):
     url = "https://api.deezer.com/playlist/1116189381"
     response = requests.get(url)
     data = json.loads(response.text)

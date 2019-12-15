@@ -4,7 +4,7 @@ import datetime
 from settings import STATIC_DIR, FULL_VIDEOS_DIR, CUT_VIDEOS_DIR, TRANSITION_VIDEOS_DIR, IMG_DIR,\
     FONTS_DIR, CONTENT_DIR, TS_CUT_VIDEOS_DIR, SOUND_DIR, TS_TRANSITION_VIDEOS_DIR
 
-from tasks import video, yandex, base
+from tasks import video, base
 
 
 def create_video(chart_dict):
@@ -45,14 +45,14 @@ def create_video(chart_dict):
     video.concat(concat_list, CONTENT_DIR)
 
 
-if __name__ == "__main__":
+def get_chart_dict(amount_pos=20):
     with open(f"{os.path.join(STATIC_DIR, 'music_base.json')}", "r", encoding="utf-8") as f:
         music_base = json.load(f)
 
-    with open(f"static/music_base {datetime.datetime.today().date().isoformat()}.json", "w", encoding="utf-8") as f:
-        json.dump(music_base, f)
+    # with open(f"static/music_base {datetime.datetime.today().date().isoformat()}.json", "w", encoding="utf-8") as f:
+    #     json.dump(music_base, f)
 
-    chart = base.calc_chart(yandex.get_chart_info(), 25)
+    chart = base.calc_chart(amount_pos)
     music_base = base.append_music_base(music_base, chart)
     music_base = base.update_music_base(music_base)
     chart = base.update_chart(music_base, chart)
@@ -63,4 +63,10 @@ if __name__ == "__main__":
     with open(f"static/chart {datetime.datetime.today().isoformat()}.json", "w", encoding="utf-8") as f:
         json.dump(chart, f)
 
-    create_video(chart)
+    return chart
+
+
+if __name__ == "__main__":
+    # chart = get_chart_dict()
+    # create_video(chart)
+    pass

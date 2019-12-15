@@ -29,7 +29,7 @@ def get_yandex_id(artist, title):
     return str(request.best.result.id)
 
 
-def get_chart_info(amount_pos):
+def get_chart_info(amount_pos=20):
     """
     Метод получения списка лучших треков.
     :return: список словарей, с 4 ключами: yandex_id, title, artist, position.

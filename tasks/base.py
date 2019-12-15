@@ -1,9 +1,52 @@
-from tasks import yandex, youtube
+import json
+from tasks import yandex, youtube, deezer
 
 
-def calc_chart(chart, amount_pos):
-    chart.sort(key=lambda dictionary: dictionary['position'])
-    return chart[:amount_pos]
+def calc_chart(amount_pos=20):
+    yandex_chart = yandex.get_chart_info(amount_pos)
+    for row in yandex_chart:
+        row["point"] = int(100 / row["position"])
+
+    deezer_chart = deezer.get_chart_info(amount_pos)
+    for row in deezer_chart:
+        row["point"] = int(100 / row["position"])
+
+    with open("static/music_base.json", "r", encoding="utf-8") as f:
+        base = json.load(f)
+
+    for yandex_chart_row in yandex_chart:
+        for base_row in base:
+            if yandex_chart_row["yandex_id"] == base_row["yandex_id"]:
+                yandex_chart_row["deezer_id"] = base_row["deezer_id"]
+                break
+        else:
+            yandex_chart_row["deezer_id"] = deezer.get_deezer_id(yandex_chart_row["artist"], yandex_chart_row["title"])
+
+    for deezer_chart_row in deezer_chart:
+        for base_row in base:
+            if deezer_chart_row["deezer_id"] == base_row["deezer_id"]:
+                deezer_chart_row["yandex_id"] = base_row["yandex_id"]
+                break
+        else:
+            deezer_chart_row["yandex_id"] = deezer.get_deezer_id(deezer_chart_row["artist"], deezer_chart_row["title"])
+
+    general_chart = yandex_chart.copy()
+    for deezer_chart_row in deezer_chart:
+        for general_chart_row in general_chart:
+            if general_chart_row["deezer_id"] == deezer_chart_row["deezer_id"]:
+                general_chart_row["point"] += deezer_chart_row["point"]
+                break
+        else:
+            general_chart.append(deezer_chart_row)
+
+    general_chart.sort(key=lambda dictionary: dictionary['point'], reverse=True)
+    for row in enumerate(general_chart, 1):
+        row[1]["position"] = row[0]
+
+    general_chart = general_chart[:amount_pos]
+    general_chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
+
+    return general_chart
 
 
 def append_music_base(music_base, chart):
