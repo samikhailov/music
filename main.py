@@ -9,7 +9,7 @@ from tasks import video, yandex, base
 
 def create_video(chart_dict):
     chart_dict.sort(key=lambda dictionary: dictionary['position'], reverse=True)
-    concat_list = []
+    concat_list = ["D:/Documents/Code/music/static/videos/intro_ts"]
 
     for row in chart_dict:
         # set vars
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     with open("static/music_base.json", "w", encoding="utf-8") as f:
         json.dump(music_base, f)
 
-    with open("static/chart {datetime.datetime.today().isoformat()}.json", "w", encoding="utf-8") as f:
+    with open(f"static/chart {datetime.datetime.today().isoformat()}.json", "w", encoding="utf-8") as f:
         json.dump(chart, f)
 
     create_video(chart)
