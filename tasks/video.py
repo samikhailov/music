@@ -1,6 +1,7 @@
 import os
 import ffmpeg
 import youtube_dl
+from pychorus import find_and_output_chorus
 
 
 def download(video_url, full_video):
@@ -40,11 +41,10 @@ def draw_titles(artist, title, blank_img, font):
     return output_stream
 
 
-def create_cut(full_video, cut_video, row, blank_img, font):
+def cut_video(full_video, cut_video, row, blank_img, font, start_video):
     if os.path.exists(cut_video) is False:
-        start = "1:20"
         duration = 8
-        stream = ffmpeg.input(full_video, ss=start, t=duration)
+        stream = ffmpeg.input(full_video, ss=start_video, t=duration)
         stream = set_requirements(stream)
         titles = draw_titles(row["artist"], row["title"], blank_img, font).setpts("PTS-STARTPTS+40")
         stream = ffmpeg.overlay(stream, titles, eof_action="pass").setpts("PTS-STARTPTS")
@@ -90,6 +90,24 @@ def convert_to_ts(input_file_name, source_dir, output_dir):
             .output(os.path.join(output_dir, output_file_name), c='copy', f='mpegts', **{'bsf:v': 'h264_mp4toannexb'})
             .run()
         )
+
+
+def convert_to_mp3(input_mp4, output_dir):
+    output_file_name = input_mp4.replace('\\', '/').split("/")[-1].split(".")[0] + ".mp3"
+    output_file = os.path.join(output_dir, output_file_name)
+    print(output_file_name)
+    print(output_file)
+    if os.path.exists(output_file) is False:
+        input = ffmpeg.input(input_mp4)
+        audio = input.audio
+        out = ffmpeg.output(audio, output_file)
+        out.run()
+
+
+def get_video_start(audio_file, clip_length=8):
+    chorus_start_sec = find_and_output_chorus(audio_file, None, clip_length)
+    result = f'{int(chorus_start_sec // 60):02d}:{int(chorus_start_sec % 60):02d}'
+    return result
 
 
 def concat(video_list, output_path):

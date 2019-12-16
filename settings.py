@@ -24,4 +24,6 @@ TRANSITION_VIDEOS_DIR = os.path.join(CONTENT_DIR, "transition_videos")
 
 TS_TRANSITION_VIDEOS_DIR = os.path.join(CONTENT_DIR, "ts_transition_videos")
 
+MP3_VIDEOS_DIR = os.path.join(CONTENT_DIR, "mp3_videos")
+
 TASKS_DIR = os.path.join(BASE_DIR, "tasks")
