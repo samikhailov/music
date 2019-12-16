@@ -2,6 +2,7 @@ import os
 import ffmpeg
 import youtube_dl
 from pychorus import find_and_output_chorus
+from settings import IMG_DIR
 
 
 def download(video_url, full_video):
@@ -18,22 +19,28 @@ def download(video_url, full_video):
             ydl.extract_info(video_url, download=True)
 
 
-def set_requirements(in_stream):
-    aud = in_stream.audio
+def set_requirements(in_stream, duration):
+    aud = (
+        in_stream.audio
+        .filter('afade', type='in', duration=0.5)
+        .filter('afade', type='out', start_time=duration-0.5, duration=0.5)
+    )
     vid = (
         in_stream.video
         .filter_("fps", fps=25)
         .filter_("scale", w=1920, h=1080, force_original_aspect_ratio="decrease")
-        .filter_("pad", w=1920, h=1080, x=960, y=540)
+        .filter_("pad", w=1920, h=1080, x="(ow-iw)/2", y="(oh-ih)/2")
+        .filter('fade', type='in', duration=0.5)
+        .filter('fade', type='out', start_time=duration-0.5, duration=0.5)
     )
 
     return ffmpeg.concat(vid, aud, v=1, a=1)
 
 
-def draw_titles(artist, title, blank_img, font):
+def draw_titles(artist, title, font):
     output_stream = (
         ffmpeg
-        .input(blank_img, loop=1, t="00:05")
+        .input(os.path.join(IMG_DIR, "blank.png"), loop=1, t="00:05")
         .drawtext(text=artist, x=200, y=800, fontsize=56, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
         .drawtext(text=title, x=200, y=880, fontsize=44, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
     )
@@ -41,25 +48,27 @@ def draw_titles(artist, title, blank_img, font):
     return output_stream
 
 
-def cut_video(full_video, cut_video, row, blank_img, font, start_video):
+def cut_video(full_video, cut_video, row, font, start_video):
     if os.path.exists(cut_video) is False:
         duration = 8
         stream = ffmpeg.input(full_video, ss=start_video, t=duration)
-        stream = set_requirements(stream)
-        titles = draw_titles(row["artist"], row["title"], blank_img, font).setpts("PTS-STARTPTS+40")
+        stream = set_requirements(stream, duration)
+        titles = draw_titles(row["artist"], row["title"], font).setpts("PTS-STARTPTS+40")
         stream = ffmpeg.overlay(stream, titles, eof_action="pass").setpts("PTS-STARTPTS")
         output = ffmpeg.output(stream, cut_video)
         output.run()
 
 
-def create_transition(transition_video, position, blank_img, silence_audio, font):
+def create_transition(transition_video, position, silence_audio, font):
     if os.path.exists(transition_video) is False:
-        duration = 1
+        duration = 1.3
 
-        video_stream = ffmpeg.input(blank_img, loop=1, t=duration)
+        video_stream = ffmpeg.input(os.path.join(IMG_DIR, "black.png"), loop=1, t=duration)
         vid = (
             video_stream.video
-            .drawtext(text=position, x="(w-text_w)/2", y="(h-text_h)/2", fontsize=160, fontfile=font)
+            .drawtext(text=position, x="(w-text_w)/2", y="(h-text_h)/2", fontsize=200, fontfile=font, fontcolor="white")
+            .filter('fade', type='in', duration=0.3)
+            .filter('fade', type='out', start_time=duration-0.3, duration=0.3)
         )
 
         audio_stream = ffmpeg.input(silence_audio, t=duration)
@@ -95,8 +104,7 @@ def convert_to_ts(input_file_name, source_dir, output_dir):
 def convert_to_mp3(input_mp4, output_dir):
     output_file_name = input_mp4.replace('\\', '/').split("/")[-1].split(".")[0] + ".mp3"
     output_file = os.path.join(output_dir, output_file_name)
-    print(output_file_name)
-    print(output_file)
+    print(os.path.exists(output_file))
     if os.path.exists(output_file) is False:
         input = ffmpeg.input(input_mp4)
         audio = input.audio

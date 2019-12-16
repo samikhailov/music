@@ -12,7 +12,8 @@ def create_video(chart):
         base = json.load(f)
 
     chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
-    concat_list = [os.path.join(VIDEOS_DIR, "intro_ts")]
+    # concat_list = [os.path.join(VIDEOS_DIR, "intro_ts")]
+    concat_list = []
 
     for row in chart:
         # set vars
@@ -35,7 +36,6 @@ def create_video(chart):
         ts_transition_video = os.path.join(TS_TRANSITION_VIDEOS_DIR, ts_transition_video_name)
 
         font = os.path.join(FONTS_DIR, "SourceSansPro-Regular.ttf")
-        blank_img = os.path.join(IMG_DIR, "blank.png")
         silence_audio = os.path.join(AUDIOS_DIR, "silence_mp3")
 
         # run funcs
@@ -53,8 +53,8 @@ def create_video(chart):
                 start_video = row["video_start"]
                 break
 
-        video.cut_video(full_video, cut_video, row, blank_img, font, start_video)
-        video. create_transition(transition_video, row["position"], blank_img, silence_audio, font)
+        video.cut_video(full_video, cut_video, row, font, start_video)
+        video.create_transition(transition_video, row["position"], silence_audio, font)
         video.convert_to_ts(cut_video_name, CUT_VIDEOS_DIR, TS_CUT_VIDEOS_DIR)
         video.convert_to_ts(transition_video_name, TRANSITION_VIDEOS_DIR, TS_TRANSITION_VIDEOS_DIR)
 
@@ -81,7 +81,7 @@ def get_chart_dict(amount_pos):
 
 
 def main():
-    amount_pos = 50
+    amount_pos = 7
     general_chart = get_chart_dict(amount_pos)
     general_chart = general_chart[:amount_pos]
     general_chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)

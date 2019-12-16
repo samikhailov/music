@@ -49,8 +49,6 @@ def update_general_chart(general_chart, music_base, amount_pos):
                 else:
                     chart_row["youtube_id"] = music_base_row["youtube_id"]
 
-                if music_base_row.get("video_chorus_start", "") == "":
-                    pass
                 break
 
     return general_chart
@@ -99,12 +97,12 @@ def update_music_base(music_base, chart):
     for chart_row in chart:
         for base_row in music_base:
             if base_row["yandex_id"] == chart_row["yandex_id"]:
-                base_row["artist"] = chart_row["artist"]
-                base_row["title"] = chart_row["title"]
-                base_row["youtube_id"] = chart_row.get("youtube_id", "")
-                base_row["video_start"] = chart_row.get("video_start", "")
-                base_row["yandex_id"] = chart_row["yandex_id"]
-                base_row["deezer_id"] = chart_row["deezer_id"]
+                base_row["artist"] = base_row.get("artist") or chart_row["artist"]
+                base_row["title"] = base_row.get("title") or chart_row["title"]
+                base_row["youtube_id"] = base_row.get("youtube_id") or chart_row.get("youtube_id", "")
+                base_row["video_start"] = base_row.get("video_start") or chart_row.get("video_start", "")
+                base_row["yandex_id"] = base_row.get("yandex_id") or chart_row["yandex_id"]
+                base_row["deezer_id"] = base_row.get("deezer_id") or chart_row["deezer_id"]
                 print(f'base.update_music_base(...) The record updated, yandex_id: {chart_row["yandex_id"]}')
                 break
         else:
