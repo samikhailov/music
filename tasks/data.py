@@ -38,10 +38,12 @@ def update_deezer_chart(deezer_chart, base):
     return deezer_chart
 
 
-def update_general_chart(general_chart, music_base, amount_pos):
+def update_general_chart(general_chart, amount_pos):
+    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
+        base = json.load(f)
     # Добавление youtube_id в chart
     for chart_row in general_chart[:amount_pos]:
-        for music_base_row in music_base:
+        for music_base_row in base:
             if chart_row["yandex_id"] == music_base_row["yandex_id"]:
                 if music_base_row.get("youtube_id", "") == "":
                     chart_row["youtube_id"] = youtube.get_youtube_id(chart_row["artist"], chart_row["title"])
@@ -75,7 +77,10 @@ def calc_general_chart(yandex_chart, deezer_chart):
     return general_chart
 
 
-def get_general_chart(base):
+def get_general_chart():
+    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
+        base = json.load(f)
+
     yandex_chart = yandex.get_chart_info()
     deezer_chart = deezer.get_chart_info()
 
@@ -87,7 +92,10 @@ def get_general_chart(base):
     return general_chart
 
 
-def update_music_base(music_base, chart):
+def update_music_base(chart):
+    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
+        music_base = json.load(f)
+
     """
     Добавлений новых записей в базу из чарта
     :param music_base:

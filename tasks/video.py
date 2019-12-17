@@ -2,7 +2,7 @@ import os
 import ffmpeg
 import youtube_dl
 from pychorus import find_and_output_chorus
-from settings import IMG_DIR
+from settings import IMG_DIR, FONTS_DIR, AUDIOS_DIR
 
 
 def download(video_url, full_video):
@@ -37,10 +37,12 @@ def set_requirements(in_stream, duration):
     return ffmpeg.concat(vid, aud, v=1, a=1)
 
 
-def draw_titles(artist, title, font):
+def draw_titles(artist, title):
+    duration = 5
+    font = os.path.join(FONTS_DIR, "SourceSansPro-Regular.ttf")
     output_stream = (
         ffmpeg
-        .input(os.path.join(IMG_DIR, "blank.png"), loop=1, t="00:05")
+        .input(os.path.join(IMG_DIR, "blank.png"), loop=1, t=duration)
         .drawtext(text=artist, x=200, y=800, fontsize=56, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
         .drawtext(text=title, x=200, y=880, fontsize=44, fontcolor="white", shadowx=2, shadowy=2, fontfile=font)
     )
@@ -48,20 +50,23 @@ def draw_titles(artist, title, font):
     return output_stream
 
 
-def cut_video(full_video, cut_video, row, font, start_video):
+def cut_video(full_video, cut_video, track, start_video):
     if os.path.exists(cut_video) is False:
         duration = 8
+
         stream = ffmpeg.input(full_video, ss=start_video, t=duration)
         stream = set_requirements(stream, duration)
-        titles = draw_titles(row["artist"], row["title"], font).setpts("PTS-STARTPTS+40")
+        titles = draw_titles(track["artist"], track["title"]).setpts("PTS-STARTPTS+40")
         stream = ffmpeg.overlay(stream, titles, eof_action="pass").setpts("PTS-STARTPTS")
         output = ffmpeg.output(stream, cut_video)
         output.run()
 
 
-def create_transition(transition_video, position, silence_audio, font):
+def create_transition(transition_video, position):
     if os.path.exists(transition_video) is False:
         duration = 1.3
+        font = os.path.join(FONTS_DIR, "SourceSansPro-Regular.ttf")
+        silence_audio = os.path.join(AUDIOS_DIR, "silence_mp3")
 
         video_stream = ffmpeg.input(os.path.join(IMG_DIR, "black.png"), loop=1, t=duration)
         vid = (
@@ -104,7 +109,6 @@ def convert_to_ts(input_file_name, source_dir, output_dir):
 def convert_to_mp3(input_mp4, output_dir):
     output_file_name = input_mp4.replace('\\', '/').split("/")[-1].split(".")[0] + ".mp3"
     output_file = os.path.join(output_dir, output_file_name)
-    print(os.path.exists(output_file))
     if os.path.exists(output_file) is False:
         input = ffmpeg.input(input_mp4)
         audio = input.audio
