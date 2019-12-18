@@ -118,7 +118,7 @@ def convert_to_mp3(input_mp4, output_dir):
 
 def get_video_start(audio_file, clip_length=8):
     chorus_start_sec = find_and_output_chorus(audio_file, None, clip_length)
-    result = f'{int(chorus_start_sec // 60):02d}:{int(chorus_start_sec % 60):02d}'
+    result = f'00:{int(chorus_start_sec // 60):02d}:{int(chorus_start_sec % 60):02d}'
     return result
 
 

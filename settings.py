@@ -2,6 +2,8 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+DATABASE = os.path.join(BASE_DIR, "music.sqlite3")
+
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 IMG_DIR = os.path.join(STATIC_DIR, "images")

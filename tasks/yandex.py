@@ -2,7 +2,6 @@ import os
 import json
 import requests
 from yandex_music.client import Client
-from datetime import datetime
 from settings import TASKS_DIR
 
 

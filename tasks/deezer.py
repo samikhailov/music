@@ -1,7 +1,7 @@
 import json
 import urllib
 import requests
-from datetime import datetime
+from tasks.models import Deezer
 
 
 def get_deezer_id(artist, title):
@@ -20,12 +20,8 @@ def get_deezer_id(artist, title):
 
 
 def get_artists(deezer_id):
-    with open("static/music_base.json", "r", encoding="utf-8") as f:
-        base = json.load(f)
-    for row in base:
-        if row["deezer_id"] == deezer_id:
-            artist = row["artist"]
-            break
+    if Deezer.get_or_none(Deezer.in_service_id == deezer_id) is not None:
+        artist = Deezer.get_or_none(Deezer.in_service_id == deezer_id).artist
     else:
         url = f"https://api.deezer.com/track/{deezer_id}"
         response = requests.get(url)
