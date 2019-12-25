@@ -1,15 +1,13 @@
-import os
 import json
 from tasks import yandex, youtube, deezer
 from datetime import datetime
-import time
-from settings import STATIC_DIR
 from tasks.models import Track, Yandex, Deezer, Youtube
 
 
 def update_yandex_chart(yandex_chart):
-    # Добавление поля deezer_id в yandex_chart
-
+    """
+    Добавление поля deezer_id в yandex_chart
+    """
     for yandex_chart_row in yandex_chart:
         if Yandex.get_or_none(Yandex.in_service_id == yandex_chart_row["yandex_id"]) is not None:
             track = Yandex.get(Yandex.in_service_id == yandex_chart_row["yandex_id"]).track
@@ -24,13 +22,21 @@ def update_yandex_chart(yandex_chart):
 
 
 def update_deezer_chart(deezer_chart):
-    # Добавление поля yandex_id в deezer_chart
+    """
+    Добавление поля yandex_id в deezer_chart
+    """
     for deezer_chart_row in deezer_chart:
-        if Deezer.get_or_none(Deezer.in_service_id == deezer_chart_row["deezer_id"]) is not None:
-            track = Deezer.get(Deezer.in_service_id == deezer_chart_row["deezer_id"]).track
-            deezer_chart_row["yandex_id"] = int(Yandex.get(Yandex.track == track).in_service_id)
-        else:
-            deezer_chart_row["yandex_id"] = yandex.get_yandex_id(deezer_chart_row["artist"], deezer_chart_row["title"])
+        if Deezer.get_or_none(Deezer.in_service_id == deezer_chart_row["deezer_id"]) is None:
+            track = Track.get_or_create(artist=deezer_chart_row["artist"], title=deezer_chart_row["title"])
+            Deezer.get_or_create(in_service_id=deezer_chart_row["deezer_id"], track=track,
+                                 artist=deezer_chart_row["artist"], title=deezer_chart_row["title"])
+            yandex_track = yandex.get_yandex_track_info(deezer_chart_row["artist"], deezer_chart_row["title"])
+            Yandex.get_or_create(in_service_id=yandex_track["yandex_id"], track=track,
+                                 artist=yandex_track["artist"], title=yandex_track["title"])
+            print(f"New record. {track.artist} - {track.title}")
+
+        track = Deezer.get(Deezer.in_service_id == deezer_chart_row["deezer_id"]).track
+        deezer_chart_row["yandex_id"] = Yandex.get(Yandex.track == track).in_service_id
 
     with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(deezer_chart, f)
@@ -39,23 +45,24 @@ def update_deezer_chart(deezer_chart):
 
 
 def update_general_chart(general_chart, amount_pos):
-    # Добавление youtube_id в chart
+    """
+    Добавление youtube_id в general_chart
+    """
     for chart_row in general_chart[:amount_pos]:
-        if Yandex.get_or_none(Yandex.in_service_id == chart_row["yandex_id"]) is not None:
-            track = Yandex.get(Yandex.in_service_id == chart_row["yandex_id"]).track
-            if Youtube.get_or_none(Youtube.id == chart_row["youtube_id"]) is None:
-                Youtube.create()
+        track = Yandex.get(Yandex.in_service_id == chart_row["yandex_id"]).track
+        if Youtube.get_or_none(Youtube.track == track) is None:
+            track_info = youtube.get_youtube_track_info(chart_row["artist"], chart_row["title"])
+            Youtube.create(id=track_info["id"], track=track, title=track_info["title"])
 
-
-            chart_row["youtube_id"] = Youtube.get(Youtube.track == track).id
-        else:
-            chart_row["youtube_id"] = youtube.get_youtube_id(chart_row["artist"], chart_row["title"])
+        chart_row["youtube_id"] = Youtube.get(Youtube.track == track).id
 
     return general_chart
 
 
 def calc_general_chart(yandex_chart, deezer_chart):
-    # Расчет глобального чата
+    """
+    Расчет глобального чата
+    """
     general_chart = yandex_chart.copy()
     for deezer_chart_row in deezer_chart:
         for general_chart_row in general_chart:
@@ -85,25 +92,3 @@ def get_general_chart():
     general_chart = calc_general_chart(yandex_chart, deezer_chart)
 
     return general_chart
-
-
-def update_music_base(chart):
-
-    """
-    Добавлений новых записей в базу из чарта
-    :param music_base:
-    :param chart:
-    :return:
-    """
-    for chart_row in chart:
-        if Track.get_or_none(Yandex.in_service_id == chart_row["yandex_id"]) is None:
-            Track.get_or_create(artist=chart_row["artist"], title=chart_row["title"])
-            Yandex.get_or_create(track_id=Track.select(Track.id).order_by(Track.id.desc()).limit(1).get(),
-                                 in_service_id=chart_row["yandex_id"], artist=chart_row["artist"],
-                                 title=chart_row["title"])
-            Deezer.get_or_create(track_id=Track.select(Track.id).order_by(Track.id.desc()).limit(1).get(),
-                                 in_service_id=chart_row["deezer_id"], artist=chart_row["artist"],
-                                 title=chart_row["title"])
-            Youtube.get_or_create(id=chart_row["youtube_id"], title=f'{chart_row["title"]} - {chart_row["artist"]}',
-                                  best_part_start=chart_row["video_start"])
-            print(f'base.update_music_base(...) The new record, yandex_id: {chart_row["yandex_id"]}')

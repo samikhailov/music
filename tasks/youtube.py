@@ -4,7 +4,7 @@ import requests
 import sys
 
 
-def get_youtube_id(artist, title):
+def get_youtube_track_info(artist, title):
     token = "AIzaSyAlFQEDZ_eupQyAw7HksR8AYT7cBYAYsYA"
     search_req = urllib.parse.quote_plus(f"{artist} {title}")
     url = (f"https://www.googleapis.com/youtube/v3/search"
@@ -17,6 +17,6 @@ def get_youtube_id(artist, title):
     elif data["pageInfo"]["totalResults"] == 0:
         result = ""
     else:
-        result = data["items"][0]["id"]["videoId"]
-        print(f'youtube.get_youtube_id("{artist}", "{title}"): {result}')
+        result = {"id": data["items"][0]["id"]["videoId"], "title": data["items"][0]["snippet"]["title"]}
+        print(f'youtube.get_youtube_id("{artist}", "{title}"): {result["id"]}')
     return result

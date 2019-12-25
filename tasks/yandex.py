@@ -22,10 +22,14 @@ def get_client():
     return client
 
 
-def get_yandex_id(artist, title):
+def get_yandex_track_info(artist, title):
     client = get_client()
-    request = client.search(f"{artist} {title}")
-    result = request.best.result.id
+    response = client.search(f"{artist} {title}")
+    result = {
+        "id": response.best.result.id,
+        "artist": ", ".join([i.name for i in response.best.result.artists]),
+        "title": response.best.result.title
+    }
     print(f'yandex.get_yandex_id("{artist}", "{title}"): {result}')
     return result
 
