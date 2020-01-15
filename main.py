@@ -33,15 +33,11 @@ def create_video(chart):
         video.convert_to_mp3(full_video, MP3_VIDEOS_DIR)
 
         # Не в тему. Добавление в базу время старта видео
-        track = Yandex.get(Yandex.in_service_id == chart_track["yandex_id"]).track
-        if Youtube.get(Youtube.track == track).best_part_start == "00:00:00":
-            (
-                Youtube
-                .update(best_part_start=video.get_video_start(mp3_video, clip_length=8))
-                .where(Youtube.track == track)
-            )
+        track = Music.get_or_none(Music.youtube_id == chart_track["youtube_id"])
+        if track.video_start is None:
+            track = data.update_video_start(mp3_video, chart_track["youtube_id"])
 
-        video.cut_video(full_video, cut_video, chart_track, start_video)
+        video.cut_video(full_video, cut_video, chart_track, str(track.video_start))
         video.create_transition(transition_video, chart_track["position"])
         video.convert_to_ts(cut_video_name, CUT_VIDEOS_DIR, TS_CUT_VIDEOS_DIR)
         video.convert_to_ts(transition_video_name, TRANSITION_VIDEOS_DIR, TS_TRANSITION_VIDEOS_DIR)
@@ -52,25 +48,18 @@ def create_video(chart):
     video.concat(concat_list, CONTENT_DIR)
 
 
-def get_chart_dict(amount_pos):
-
+def main():
+    amount_pos = 50
     general_chart = data.get_general_chart()
     general_chart = data.update_general_chart(general_chart, amount_pos)
-    data.update_music_base(general_chart)
 
     with open(os.path.join(STATIC_DIR, f'general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json'),
               "w", encoding="utf-8") as f:
         json.dump(general_chart, f)
 
-    return general_chart
-
-
-def main():
-    amount_pos = 50
-    general_chart = get_chart_dict(amount_pos)
     general_chart = general_chart[:amount_pos]
     general_chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
-    # create_video(general_chart)
+    create_video(general_chart)
 
 
 if __name__ == "__main__":
