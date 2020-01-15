@@ -1,15 +1,12 @@
 import os
 import json
 from datetime import datetime
-from settings import (STATIC_DIR, FULL_VIDEOS_DIR, CUT_VIDEOS_DIR, TRANSITION_VIDEOS_DIR,
-                      CONTENT_DIR, TS_CUT_VIDEOS_DIR, TS_TRANSITION_VIDEOS_DIR, VIDEOS_DIR, MP3_VIDEOS_DIR)
 from tasks import video, data
+from tasks.models import *
+from settings import *
 
 
 def create_video(chart):
-    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
-        base = json.load(f)
-
     chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
     concat_list = [os.path.join(VIDEOS_DIR, "intro_ts")]
     # concat_list = []
@@ -36,17 +33,11 @@ def create_video(chart):
         video.convert_to_mp3(full_video, MP3_VIDEOS_DIR)
 
         # Не в тему. Добавление в базу время старта видео
-        start_video = "01:20"
-        for base_track in base:
-            if chart_track["yandex_id"] == base_track["yandex_id"]:
-                if base_track.get("video_start", "") == "":
-                    chart_track["video_start"] = video.get_video_start(mp3_video, clip_length=8)
-                else:
-                    chart_track["video_start"] = base_track["video_start"]
-                start_video = chart_track["video_start"]
-                break
+        track = Music.get_or_none(Music.youtube_id == chart_track["youtube_id"])
+        if track.video_start is None:
+            track = data.update_video_start(mp3_video, chart_track["youtube_id"])
 
-        video.cut_video(full_video, cut_video, chart_track, start_video)
+        video.cut_video(full_video, cut_video, chart_track, str(track.video_start))
         video.create_transition(transition_video, chart_track["position"])
         video.convert_to_ts(cut_video_name, CUT_VIDEOS_DIR, TS_CUT_VIDEOS_DIR)
         video.convert_to_ts(transition_video_name, TRANSITION_VIDEOS_DIR, TS_TRANSITION_VIDEOS_DIR)
@@ -54,26 +45,18 @@ def create_video(chart):
         concat_list.append(ts_transition_video)
         concat_list.append(ts_cut_video)
 
-    data.update_music_base(chart)
     video.concat(concat_list, CONTENT_DIR)
 
 
-def get_chart_dict(amount_pos):
-
+def main():
+    amount_pos = 50
     general_chart = data.get_general_chart()
     general_chart = data.update_general_chart(general_chart, amount_pos)
-    data.update_music_base(general_chart)
 
     with open(os.path.join(STATIC_DIR, f'general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json'),
               "w", encoding="utf-8") as f:
         json.dump(general_chart, f)
 
-    return general_chart
-
-
-def main():
-    amount_pos = 50
-    general_chart = get_chart_dict(amount_pos)
     general_chart = general_chart[:amount_pos]
     general_chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
     create_video(general_chart)

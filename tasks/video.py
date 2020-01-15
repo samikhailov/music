@@ -3,6 +3,7 @@ import ffmpeg
 import youtube_dl
 from pychorus import find_and_output_chorus
 from settings import IMG_DIR, FONTS_DIR, AUDIOS_DIR
+from datetime import datetime
 
 
 def download(video_url, full_video):
@@ -51,6 +52,7 @@ def draw_titles(artist, title):
 
 
 def cut_video(full_video, cut_video, track, start_video):
+    print(f'cut_video("{full_video}", "{cut_video}", "{track}", "{start_video}")')
     if os.path.exists(cut_video) is False:
         duration = 8
 
@@ -119,6 +121,7 @@ def convert_to_mp3(input_mp4, output_dir):
 def get_video_start(audio_file, clip_length=8):
     chorus_start_sec = find_and_output_chorus(audio_file, None, clip_length)
     result = f'{int(chorus_start_sec // 60):02d}:{int(chorus_start_sec % 60):02d}'
+    result = datetime.strptime(result, "%M:%S").time()
     return result
 
 

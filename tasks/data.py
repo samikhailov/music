@@ -1,20 +1,45 @@
-import os
 import json
 from tasks import yandex, youtube, deezer
 from datetime import datetime
-import time
-from settings import STATIC_DIR
+from tasks.models import Music
+from tasks import video
 
 
-def update_yandex_chart(yandex_chart, base):
-    # Добавление поля deezer_id в yandex_chart
+def update_video_start(mp3_video, youtube_id):
+    start_video = video.get_video_start(mp3_video, clip_length=8)
+    track = Music.get(youtube_id=youtube_id)
+    track.video_start = start_video
+    track.save()
+    return track
+
+
+def insert_track(track, service):
+    if service == "yandex":
+        track["deezer_id"] = deezer.get_deezer_id(track["artist"], track["title"])
+    elif service == "deezer":
+        track["yandex_id"] = yandex.get_yandex_id(track["artist"], track["title"])
+    else:
+        return None
+
+    track_object = Music.create(
+        artist=track["artist"],
+        title=track["title"],
+        yandex_id=track["yandex_id"],
+        deezer_id=track["deezer_id"]
+    )
+
+    return track_object
+
+
+def update_yandex_chart(yandex_chart):
+    """
+    Добавление поля deezer_id в yandex_chart
+    """
     for yandex_chart_row in yandex_chart:
-        for base_row in base:
-            if yandex_chart_row["yandex_id"] == base_row["yandex_id"]:
-                yandex_chart_row["deezer_id"] = base_row["deezer_id"]
-                break
-        else:
-            yandex_chart_row["deezer_id"] = deezer.get_deezer_id(yandex_chart_row["artist"], yandex_chart_row["title"])
+        track = Music.get_or_none(Music.yandex_id == yandex_chart_row["yandex_id"])
+        if track is None:
+            track = insert_track(yandex_chart_row, "yandex")
+        yandex_chart_row["deezer_id"] = track.deezer_id
 
     with open(f'static/yandex_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(yandex_chart, f)
@@ -22,15 +47,15 @@ def update_yandex_chart(yandex_chart, base):
     return yandex_chart
 
 
-def update_deezer_chart(deezer_chart, base):
-    # Добавление поля yandex_id в deezer_chart
+def update_deezer_chart(deezer_chart):
+    """
+    Добавление поля yandex_id в deezer_chart
+    """
     for deezer_chart_row in deezer_chart:
-        for base_row in base:
-            if deezer_chart_row["deezer_id"] == base_row["deezer_id"]:
-                deezer_chart_row["yandex_id"] = base_row["yandex_id"]
-                break
-        else:
-            deezer_chart_row["yandex_id"] = yandex.get_yandex_id(deezer_chart_row["artist"], deezer_chart_row["title"])
+        track = Music.get_or_none(Music.deezer_id == deezer_chart_row["deezer_id"])
+        if track is None:
+            track = insert_track(deezer_chart_row, "deezer")
+        deezer_chart_row["yandex_id"] = track.yandex_id
 
     with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(deezer_chart, f)
@@ -39,25 +64,27 @@ def update_deezer_chart(deezer_chart, base):
 
 
 def update_general_chart(general_chart, amount_pos):
-    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
-        base = json.load(f)
-    # Добавление youtube_id в chart
-    for chart_row in general_chart[:amount_pos]:
-        for music_base_row in base:
-            if chart_row["yandex_id"] == music_base_row["yandex_id"]:
-                if music_base_row.get("youtube_id", "") == "":
-                    chart_row["youtube_id"] = youtube.get_youtube_id(chart_row["artist"], chart_row["title"])
-                    time.sleep(0.5)
-                else:
-                    chart_row["youtube_id"] = music_base_row["youtube_id"]
+    """
+    Добавление youtube_id в general_chart
+    """
+    for track in general_chart[:amount_pos]:
+        track_object = Music.get_or_none(Music.yandex_id == track["yandex_id"])
+        if track_object is None:
+            track_object = Music.get(Music.deezer_id == track["deezer_id"])
 
-                break
+        if track_object.youtube_id is None:
+            track_object.youtube_id = youtube.get_youtube_id(track["artist"], track["title"])
+            track_object.save()
+
+        track["youtube_id"] = track_object.youtube_id
 
     return general_chart
 
 
 def calc_general_chart(yandex_chart, deezer_chart):
-    # Расчет глобального чата
+    """
+    Расчет глобального чата
+    """
     general_chart = yandex_chart.copy()
     for deezer_chart_row in deezer_chart:
         for general_chart_row in general_chart:
@@ -68,8 +95,8 @@ def calc_general_chart(yandex_chart, deezer_chart):
             general_chart.append(deezer_chart_row)
 
     general_chart.sort(key=lambda dictionary: dictionary['point'], reverse=True)
-    for row in enumerate(general_chart, 1):
-        row[1]["position"] = row[0]
+    for position, track in enumerate(general_chart, 1):
+        track["position"] = position
 
     with open(f'static/general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(general_chart, f)
@@ -78,52 +105,12 @@ def calc_general_chart(yandex_chart, deezer_chart):
 
 
 def get_general_chart():
-    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
-        base = json.load(f)
-
     yandex_chart = yandex.get_chart_info()
-    deezer_chart = deezer.get_chart_info()
+    yandex_chart = update_yandex_chart(yandex_chart)
 
-    yandex_chart = update_yandex_chart(yandex_chart, base)
-    deezer_chart = update_deezer_chart(deezer_chart, base)
+    deezer_chart = deezer.get_chart_info()
+    deezer_chart = update_deezer_chart(deezer_chart)
 
     general_chart = calc_general_chart(yandex_chart, deezer_chart)
 
     return general_chart
-
-
-def update_music_base(chart):
-    with open(os.path.join(STATIC_DIR, "music_base.json"), "r", encoding="utf-8") as f:
-        music_base = json.load(f)
-
-    """
-    Добавлений новых записей в базу из чарта
-    :param music_base:
-    :param chart:
-    :return:
-    """
-    for chart_row in chart:
-        for base_row in music_base:
-            if base_row["yandex_id"] == chart_row["yandex_id"]:
-                base_row["artist"] = base_row.get("artist") or chart_row["artist"]
-                base_row["title"] = base_row.get("title") or chart_row["title"]
-                base_row["youtube_id"] = base_row.get("youtube_id") or chart_row.get("youtube_id", "")
-                base_row["video_start"] = base_row.get("video_start") or chart_row.get("video_start", "")
-                base_row["yandex_id"] = base_row.get("yandex_id") or chart_row["yandex_id"]
-                base_row["deezer_id"] = base_row.get("deezer_id") or chart_row["deezer_id"]
-                print(f'base.update_music_base(...) The record updated, yandex_id: {chart_row["yandex_id"]}')
-                break
-        else:
-            music_base.append({})
-            music_base[-1]["artist"] = chart_row["artist"]
-            music_base[-1]["title"] = chart_row["title"]
-            music_base[-1]["youtube_id"] = chart_row.get("youtube_id", "")
-            music_base[-1]["video_start"] = chart_row.get("video_start", "")
-            music_base[-1]["yandex_id"] = chart_row["yandex_id"]
-            music_base[-1]["deezer_id"] = chart_row["deezer_id"]
-            print(f'base.update_music_base(...) The new record, yandex_id: {chart_row["yandex_id"]}')
-
-        with open(os.path.join(STATIC_DIR, "music_base.json"), "w", encoding="utf-8") as f:
-            json.dump(music_base, f)
-
-    return music_base

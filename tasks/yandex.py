@@ -2,7 +2,6 @@ import os
 import json
 import requests
 from yandex_music.client import Client
-from datetime import datetime
 from settings import TASKS_DIR
 
 
@@ -24,17 +23,20 @@ def get_client():
 
 
 def get_yandex_id(artist, title):
+    print(f'yandex.get_yandex_id("{artist}", "{title}")')
     client = get_client()
-    request = client.search(f"{artist} {title}")
-    result = request.best.result.id
-    print(f'yandex.get_yandex_id("{artist}", "{title}"): {result}')
+    response = client.search(f"{artist} {title}")
+    if response.best is None:
+        return None
+    result = response.best.result.id
+    print(f'result: {result}')
     return result
 
 
 def get_chart_info():
     """
-    Метод получения списка лучших треков.
-    :return: список словарей, с 4 ключами: yandex_id, title, artist, position.
+    Метод получения списка лучших треков Яндекс Музыки.
+    :return: список словарей, с 5 ключами: yandex_id, title, artist, position, point.
     """
     url = ("https://music.yandex.ru/handlers/main.jsx"
            "?what=chart&chartType=&lang=ru&external-domain=music.yandex.ru&overembed=false")
@@ -43,11 +45,12 @@ def get_chart_info():
     data = json.loads(response.text)
     chart = []
     for track in data["chart"]["tracks"]:
-        chart.append({})
-        chart[-1]["yandex_id"] = int(track["id"])
-        chart[-1]["title"] = track["title"]
-        chart[-1]["artist"] = ", ".join([i["name"] for i in track["artists"]])
-        chart[-1]["position"] = track["chart"]["position"]
-        chart[-1]["point"] = int(1000 / track["chart"]["position"])
+        chart.append({
+            "yandex_id": track["id"],
+            "title": track["title"],
+            "artist": ", ".join([i["name"] for i in track["artists"]]),
+            "position":  track["chart"]["position"],
+            "point": int(1000 / track["chart"]["position"])
+        })
 
     return chart
