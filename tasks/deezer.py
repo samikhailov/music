@@ -35,16 +35,20 @@ def get_artists(deezer_id):
 
 
 def get_chart_info():
+    """
+    Метод получения списка лучших треков Deezer.
+    :return: список словарей, с 5 ключами: deezer_id, title, artist, position, point.
+    """
     url = "https://api.deezer.com/playlist/1116189381"
     response = requests.get(url)
     data = json.loads(response.text)
     chart = []
-    for track in data["tracks"]["data"]:
-        chart.append({})
-        chart[-1]["deezer_id"] = track["id"]
-        chart[-1]["title"] = track["title"]
-        chart[-1]["artist"] = get_artists(track["id"])
-        chart[-1]["position"] = len(chart)
-        chart[-1]["point"] = int(1000 / len(chart))
-
+    for position, track in enumerate(data["tracks"]["data"], 1):
+        chart.append({
+            "deezer_id": track["id"],
+            "title": track["title"],
+            "artist": track["artist"]["name"],
+            "position": position,
+            "point": int(1000 / position)
+        })
     return chart
