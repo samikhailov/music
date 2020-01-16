@@ -52,7 +52,6 @@ def draw_titles(artist, title):
 
 
 def cut_video(full_video, cut_video, track, start_video):
-    print(f'cut_video("{full_video}", "{cut_video}", "{track}", "{start_video}")')
     if os.path.exists(cut_video) is False:
         duration = 8
 

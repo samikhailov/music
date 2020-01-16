@@ -49,7 +49,7 @@ def create_video(chart):
 
 
 def main():
-    amount_pos = 10
+    amount_pos = 50
     general_chart = data.get_general_chart()
     general_chart = data.update_general_chart(general_chart, amount_pos)
 
