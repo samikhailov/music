@@ -10,8 +10,9 @@ class Music(Model):
     title = CharField()
     yandex_id = IntegerField(null=True, default=None)
     deezer_id = IntegerField(null=True, default=None)
+    shazam_id = IntegerField(null=True, default=None)
     youtube_id = CharField(null=True, default=None)
-    video_start = TimeField(default="00:00:00")
+    video_start = TimeField(null=True, default=None)
 
     class Meta:
         database = db

@@ -22,7 +22,7 @@ def get_client():
     return client
 
 
-def get_yandex_id(artist, title):
+def get_track_id(artist, title):
     print(f'yandex.get_yandex_id("{artist}", "{title}")')
     client = get_client()
     response = client.search(f"{artist} {title}")
@@ -33,7 +33,7 @@ def get_yandex_id(artist, title):
     return result
 
 
-def get_chart_info():
+def get_chart():
     """
     Метод получения списка лучших треков Яндекс Музыки.
     :return: список словарей, с 5 ключами: yandex_id, title, artist, position, point.

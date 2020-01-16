@@ -1,10 +1,9 @@
 import json
 import urllib
 import requests
-from tasks.models import Music
 
 
-def get_deezer_id(artist, title):
+def get_track_id(artist, title):
     print(f'deezer.get_deezer_id("{artist}", "{title}")')
     search_req = urllib.parse.quote_plus(f"{artist} {title}")
     url = f"https://api.deezer.com/search?q={search_req}"
@@ -18,7 +17,7 @@ def get_deezer_id(artist, title):
     return result
 
 
-def get_chart_info():
+def get_chart():
     """
     Метод получения списка лучших треков Deezer.
     :return: список словарей, с 5 ключами: deezer_id, title, artist, position, point.

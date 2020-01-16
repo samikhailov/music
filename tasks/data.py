@@ -1,5 +1,5 @@
 import json
-from tasks import yandex, youtube, deezer
+from tasks import yandex, youtube, deezer, shazam
 from datetime import datetime
 from tasks.models import Music
 from tasks import video
@@ -15,9 +15,14 @@ def update_video_start(mp3_video, youtube_id):
 
 def insert_track(track, service):
     if service == "yandex":
-        track["deezer_id"] = deezer.get_deezer_id(track["artist"], track["title"])
+        track["deezer_id"] = deezer.get_track_id(track["artist"], track["title"])
+        track["shazam_id"] = shazam.get_track_id(track["artist"], track["title"])
     elif service == "deezer":
-        track["yandex_id"] = yandex.get_yandex_id(track["artist"], track["title"])
+        track["yandex_id"] = yandex.get_track_id(track["artist"], track["title"])
+        track["shazam_id"] = shazam.get_track_id(track["artist"], track["title"])
+    elif service == "shazam":
+        track["yandex_id"] = yandex.get_track_id(track["artist"], track["title"])
+        track["deezer_id"] = deezer.get_track_id(track["artist"], track["title"])
     else:
         return None
 
@@ -25,7 +30,8 @@ def insert_track(track, service):
         artist=track["artist"],
         title=track["title"],
         yandex_id=track["yandex_id"],
-        deezer_id=track["deezer_id"]
+        deezer_id=track["deezer_id"],
+        shazam_id=track["shazam_id"]
     )
 
     return track_object
@@ -33,13 +39,14 @@ def insert_track(track, service):
 
 def update_yandex_chart(yandex_chart):
     """
-    Добавление поля deezer_id в yandex_chart
+    Добавление id других сервисов в yandex_chart
     """
-    for yandex_chart_row in yandex_chart:
-        track = Music.get_or_none(Music.yandex_id == yandex_chart_row["yandex_id"])
-        if track is None:
-            track = insert_track(yandex_chart_row, "yandex")
-        yandex_chart_row["deezer_id"] = track.deezer_id
+    for track in yandex_chart:
+        track_object = Music.get_or_none(Music.yandex_id == track["yandex_id"])
+        if track_object is None:
+            track_object = insert_track(track, "yandex")
+        track["deezer_id"] = track_object.deezer_id
+        track["shazam_id"] = track_object.shazam_id
 
     with open(f'static/yandex_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(yandex_chart, f)
@@ -49,18 +56,36 @@ def update_yandex_chart(yandex_chart):
 
 def update_deezer_chart(deezer_chart):
     """
-    Добавление поля yandex_id в deezer_chart
+    Добавление id других сервисов в deezer_chart
     """
-    for deezer_chart_row in deezer_chart:
-        track = Music.get_or_none(Music.deezer_id == deezer_chart_row["deezer_id"])
-        if track is None:
-            track = insert_track(deezer_chart_row, "deezer")
-        deezer_chart_row["yandex_id"] = track.yandex_id
+    for track in deezer_chart:
+        track_object = Music.get_or_none(Music.deezer_id == track["deezer_id"])
+        if track_object is None:
+            track_object = insert_track(track, "deezer")
+        track["yandex_id"] = track_object.yandex_id
+        track["shazam_id"] = track_object.shazam_id
 
     with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
         json.dump(deezer_chart, f)
 
     return deezer_chart
+
+
+def update_shazam_chart(shazam_chart):
+    """
+    Добавление id других сервисов в shazam_chart
+    """
+    for track in shazam_chart:
+        track_object = Music.get_or_none(Music.shazam_id == track["shazam_id"])
+        if track_object is None:
+            track_object = insert_track(track, "shazam")
+        track["yandex_id"] = track_object.yandex_id
+        track["deezer_id"] = track_object.deezer_id
+
+    with open(f'static/shazam_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+        json.dump(shazam_chart, f)
+
+    return shazam_chart
 
 
 def update_general_chart(general_chart, amount_pos):
@@ -81,20 +106,33 @@ def update_general_chart(general_chart, amount_pos):
     return general_chart
 
 
-def calc_general_chart(yandex_chart, deezer_chart):
+def calc_general_chart(yandex_chart, deezer_chart, shazam_chart):
     """
     Расчет глобального чата
     """
+    # За основу взят чарт Яндекса
     general_chart = yandex_chart.copy()
-    for deezer_chart_row in deezer_chart:
-        for general_chart_row in general_chart:
-            if general_chart_row["deezer_id"] == deezer_chart_row["deezer_id"]:
-                general_chart_row["point"] += deezer_chart_row["point"]
+
+    # Добавление в глобальный чарт Deezer
+    for deezer_track in deezer_chart:
+        for general_track in general_chart:
+            if general_track["deezer_id"] == deezer_track["deezer_id"]:
+                general_track["point"] += deezer_track["point"]
                 break
         else:
-            general_chart.append(deezer_chart_row)
+            general_chart.append(deezer_track)
+
+    # Добавление в глобальный чат Shazam
+    for shazam_track in shazam_chart:
+        for general_track in general_chart:
+            if general_track["deezer_id"] == shazam_track["deezer_id"]:
+                general_track["point"] += shazam_track["point"]
+                break
+        else:
+            general_chart.append(shazam_track)
 
     general_chart.sort(key=lambda dictionary: dictionary['point'], reverse=True)
+
     for position, track in enumerate(general_chart, 1):
         track["position"] = position
 
@@ -105,12 +143,15 @@ def calc_general_chart(yandex_chart, deezer_chart):
 
 
 def get_general_chart():
-    yandex_chart = yandex.get_chart_info()
+    yandex_chart = yandex.get_chart()
     yandex_chart = update_yandex_chart(yandex_chart)
 
-    deezer_chart = deezer.get_chart_info()
+    deezer_chart = deezer.get_chart()
     deezer_chart = update_deezer_chart(deezer_chart)
 
-    general_chart = calc_general_chart(yandex_chart, deezer_chart)
+    shazam_chart = shazam.get_chart()
+    shazam_chart = update_shazam_chart(shazam_chart)
+
+    general_chart = calc_general_chart(yandex_chart, deezer_chart, shazam_chart)
 
     return general_chart
