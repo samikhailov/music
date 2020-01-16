@@ -29,7 +29,7 @@ def get_chart():
     chart = []
     for position, track in enumerate(data["chart"], 1):
         chart.append({
-            "shazam_id": track["key"],
+            "shazam_id": int(track["key"]),
             "artist": track["heading"]["subtitle"],
             "title": track["heading"]["title"],
             "position": position,
