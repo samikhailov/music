@@ -6,10 +6,11 @@ from tasks.models import *
 from settings import *
 
 
-def create_video(chart):
+def create_video(chart, amount_pos):
+    chart.sort(key=lambda dictionary: dictionary['position'])
+    chart = chart[:amount_pos]
     chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
     concat_list = [os.path.join(VIDEOS_DIR, "intro_ts")]
-    # concat_list = []
 
     for chart_track in chart:
         # set vars
@@ -57,9 +58,7 @@ def main():
               "w", encoding="utf-8") as f:
         json.dump(general_chart, f)
 
-    general_chart = general_chart[:amount_pos]
-    general_chart.sort(key=lambda dictionary: dictionary['position'], reverse=True)
-    create_video(general_chart)
+    create_video(general_chart, amount_pos)
 
 
 if __name__ == "__main__":
