@@ -3,6 +3,7 @@ from tasks import yandex, youtube, deezer, shazam
 from datetime import datetime
 from tasks.models import Music
 from tasks import video
+from peewee import IntegrityError
 
 
 def update_video_start(mp3_video, youtube_id):
@@ -25,16 +26,27 @@ def insert_track(track, service):
         track["deezer_id"] = deezer.get_track_id(track["artist"], track["title"])
     else:
         return None
-
+    # try:
     track_object = Music.create(
         artist=track["artist"],
         title=track["title"],
         yandex_id=track["yandex_id"],
         deezer_id=track["deezer_id"],
-        shazam_id=track["shazam_id"]
+        shazam_id=track["shazam_id"],
     )
-
     return track_object
+    '''
+    except IntegrityError:
+        with open(f'content/logs/{datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8") as f:
+            f.write(
+                f'WARNING! artist={track["artist"]}, title={track["title"]}, yandex_id={track["yandex_id"]}, '
+                f'deezer_id={track["deezer_id"]}, shazam_id={track["shazam_id"]}\n'
+            )
+            print(
+                f'WARNING! artist={track["artist"]}, title={track["title"]}, yandex_id={track["yandex_id"]}, '
+                f'deezer_id={track["deezer_id"]}, shazam_id={track["shazam_id"]}\n'
+            )
+    '''
 
 
 def update_yandex_chart(yandex_chart):
@@ -48,7 +60,9 @@ def update_yandex_chart(yandex_chart):
         track["deezer_id"] = track_object.deezer_id
         track["shazam_id"] = track_object.shazam_id
 
-    with open(f'static/yandex_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+    with open(
+        f'content/yandex_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8"
+    ) as f:
         json.dump(yandex_chart, f)
 
     return yandex_chart
@@ -65,7 +79,9 @@ def update_deezer_chart(deezer_chart):
         track["yandex_id"] = track_object.yandex_id
         track["shazam_id"] = track_object.shazam_id
 
-    with open(f'static/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+    with open(
+        f'content/deezer_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8"
+    ) as f:
         json.dump(deezer_chart, f)
 
     return deezer_chart
@@ -82,7 +98,9 @@ def update_shazam_chart(shazam_chart):
         track["yandex_id"] = track_object.yandex_id
         track["deezer_id"] = track_object.deezer_id
 
-    with open(f'static/shazam_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+    with open(
+        f'content/shazam_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8"
+    ) as f:
         json.dump(shazam_chart, f)
 
     return shazam_chart
@@ -131,12 +149,14 @@ def calc_general_chart(yandex_chart, deezer_chart, shazam_chart):
         else:
             general_chart.append(shazam_track)
 
-    general_chart.sort(key=lambda dictionary: dictionary['point'], reverse=True)
+    general_chart.sort(key=lambda dictionary: dictionary["point"], reverse=True)
 
     for position, track in enumerate(general_chart, 1):
         track["position"] = position
 
-    with open(f'static/general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', 'w', encoding='utf-8') as f:
+    with open(
+        f'content/general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json', "w", encoding="utf-8"
+    ) as f:
         json.dump(general_chart, f)
 
     return general_chart
@@ -144,12 +164,11 @@ def calc_general_chart(yandex_chart, deezer_chart, shazam_chart):
 
 def get_general_chart():
     yandex_chart = yandex.get_chart()
-    yandex_chart = update_yandex_chart(yandex_chart)
-
     deezer_chart = deezer.get_chart()
-    deezer_chart = update_deezer_chart(deezer_chart)
-
     shazam_chart = shazam.get_chart()
+
+    yandex_chart = update_yandex_chart(yandex_chart)
+    deezer_chart = update_deezer_chart(deezer_chart)
     shazam_chart = update_shazam_chart(shazam_chart)
 
     general_chart = calc_general_chart(yandex_chart, deezer_chart, shazam_chart)

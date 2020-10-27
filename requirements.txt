@@ -19,7 +19,7 @@ jedi==0.15.1
 joblib==0.14.1
 kiwisolver==1.1.0
 librosa==0.7.1
-llvmlite==0.30.0
+llvmlite==0.32.1
 mando==0.6.4
 matplotlib==3.1.2
 mccabe==0.6.1
@@ -53,4 +53,4 @@ urllib3==1.25.7
 wcwidth==0.1.7
 wincertstore==0.2
 yandex-music==0.0.15
-youtube-dl==2019.11.28
+youtube-dl==2020.09.20

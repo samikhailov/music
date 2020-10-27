@@ -54,7 +54,7 @@ def main():
     general_chart = data.get_general_chart()
     general_chart = data.update_general_chart(general_chart, amount_pos)
 
-    with open(os.path.join(STATIC_DIR, f'general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json'),
+    with open(os.path.join(CONTENT_DIR, f'general_chart {datetime.today().strftime("%y-%m-%d %H-%M-%S")}.json'),
               "w", encoding="utf-8") as f:
         json.dump(general_chart, f)
 
