@@ -30,4 +30,4 @@ pip install -r requirements.txt
  - media/ts_trimmed
 
 
-4. Переименовать файл `.env_template' в '.env'. В нем указать значение для youtube_token. О способе получения токена можно узнать на странице [Obtaining authorization credentials](https://developers.google.com/youtube/registering_an_application).
+4. Переименовать файл `.env_template` в `.env`. В нем указать значение для youtube_token. О способе получения токена можно узнать на странице [Obtaining authorization credentials](https://developers.google.com/youtube/registering_an_application).
