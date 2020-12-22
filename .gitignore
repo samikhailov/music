@@ -1,5 +1,15 @@
 # Project ignore
-content/
+static/
+media/
+
+# Virtual enviroment
+venv/
+
+# Environment variable
+.env
+
+# Logs
+*.log
 
 # Python cache 
 __pycache__/

@@ -1,33 +1,19 @@
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv()
 
-DATABASE = os.path.join(BASE_DIR, "music.sqlite3")
+# Path
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(ROOT_DIR, "static")
+MEDIA_DIR = os.path.join(ROOT_DIR, "media")
 
-STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-IMG_DIR = os.path.join(STATIC_DIR, "images")
+# Token
+YOUTUBE_TOKEN = os.getenv("YOUTUBE_TOKEN")
 
-FONTS_DIR = os.path.join(STATIC_DIR, "fonts")
-
-AUDIOS_DIR = os.path.join(STATIC_DIR, "audios")
-
-VIDEOS_DIR = os.path.join(STATIC_DIR, "videos")
-
-CONTENT_DIR = os.path.join(BASE_DIR, "content")
-
-FULL_VIDEOS_DIR = os.path.join(CONTENT_DIR, "full_videos")
-
-CUT_VIDEOS_DIR = os.path.join(CONTENT_DIR, "cut_videos")
-
-TS_CUT_VIDEOS_DIR = os.path.join(CONTENT_DIR, "ts_cut_videos")
-
-TRANSITION_VIDEOS_DIR = os.path.join(CONTENT_DIR, "transition_videos")
-
-TS_TRANSITION_VIDEOS_DIR = os.path.join(CONTENT_DIR, "ts_transition_videos")
-
-MP3_VIDEOS_DIR = os.path.join(CONTENT_DIR, "mp3_videos")
-
-LOGS_DIR = os.path.join(CONTENT_DIR, "logs")
-
-TASKS_DIR = os.path.join(BASE_DIR, "tasks")
+# Video settings
+# Количество треков в одном чарте
+CHART_LENGTH = 6
+# Длина одного трека в итоговом чарте
+ONE_TRACK_LENGTH = 8
