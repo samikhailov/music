@@ -1,5 +1,5 @@
 import logging
-from app import deezer, shazam, yandex, youtube
+from app import deezer, shazam, spotify, yandex, youtube
 from app.models import Track, BaseTrack
 
 
@@ -9,6 +9,7 @@ def get_track_obj(base_track):
         "yandex": "in_yandex_id",
         "deezer": "in_deezer_id",
         "shazam": "in_shazam_id",
+        "spotify": "in_spotify_id",
     }
     in_service_id_field = service_mapping[base_track.service]
 
@@ -39,6 +40,20 @@ def get_track_obj(base_track):
         in_shazam_id = shazam.get_track_id(base_track.artist, base_track.title)
         if in_shazam_id:
             track = Track.get_or_none(Track.in_shazam_id == in_shazam_id)
+        if track:
+            setattr(track, in_service_id_field, base_track.in_service_id)
+            track.save()
+            logging.info(
+                f"Track updated in DB ({in_service_id_field}={base_track.in_service_id}, {track.id}, {track.artist}, "
+                f"{track.title})"
+            )
+            return track
+    # Spotify
+    in_spotify_id = None
+    if base_track.service != "spotify":
+        in_spotify_id = spotify.get_track_id(base_track.artist, base_track.title)
+        if in_spotify_id:
+            track = Track.get_or_none(Track.in_spotify_id == in_spotify_id)
         if track:
             setattr(track, in_service_id_field, base_track.in_service_id)
             track.save()
@@ -80,8 +95,10 @@ def create_internat_chart(chart_lenght=50):
     yandex_chart = yandex.get_chart()
     deezer_chart = deezer.get_chart()
     shazam_chart = shazam.get_chart()
+    spotify.put_access_token_to_env()
+    spotify_chart = spotify.get_chart()
 
-    charts = [yandex_chart, deezer_chart, shazam_chart]
+    charts = [yandex_chart, deezer_chart, shazam_chart, spotify_chart]
     internal_chart_tmp = {}
     for chart in charts:
         for base_track in chart:

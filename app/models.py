@@ -10,6 +10,7 @@ class Track(Model):
     artist = CharField()
     in_deezer_id = IntegerField(null=True, unique=True)
     in_shazam_id = IntegerField(null=True, unique=True)
+    in_spotify_id = CharField(null=True, unique=True)
     in_yandex_id = IntegerField(null=True, unique=True)
     in_youtube_id = CharField(null=True, unique=True)
     chorus_start = TimeField(null=True)
@@ -29,4 +30,4 @@ class BaseTrack:
         self.service = service
 
     def __repr__(self):
-        return f"Track({self.title}, {self.in_service_id}, {self.artist}, {self.position}, {self.service})"
+        return f"Track({self.in_service_id}, {self.artist}, {self.title}, {self.position}, {self.service})"
