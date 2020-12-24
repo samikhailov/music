@@ -1,25 +1,30 @@
 version: 1
+
 formatters:
-  base:
-    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  simple:
+    format: "%(asctime)s - %(levelname)s - %(message)s"
+  extended:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
 handlers:
   console:
     class: logging.StreamHandler
     level: INFO
-    formatter: base
-    stream: ext://sys.stdout
-  file:
+    formatter: simple
+
+  file_handler:
     class: logging.FileHandler
     level: DEBUG
-    formatter: base
     filename: debug.log
-    encoding: utf8
+    formatter: extended
     mode: w
+
 loggers:
-  baseLogger:
-    level: DEBUG
-    handlers: [console, file]
+  app:
+    handlers: [console, file_handler]
     propagate: no
+    level: DEBUG
 root:
+  handlers: [console, file_handler]
+  propagate: no
   level: DEBUG
-  handlers: [console, file]
