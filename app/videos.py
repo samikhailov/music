@@ -126,26 +126,6 @@ def convert_to_ts(mp4_path, ts_path):
         ffmpeg.input(mp4_path).output(ts_path, c="copy", f="mpegts", **{"bsf:v": "h264_mp4toannexb"}).run()
 
 
-def concat_videos(chart):
-    video_list = [Directory.intro_ts]
-    for track in sorted(chart, key=lambda x: x.position, reverse=True):
-        mp4_path = os.path.join(Directory.mp4_transitions, f"{track.position:03d}.mp4")
-        target_dir = os.path.join(Directory.mp4_transitions)
-        ts_path = convert_to_ts(mp4_path, target_dir)
-        video_list.append(ts_path)
-
-        mp4_path = os.path.join(Directory.mp4_trimmed, f"{track.in_youtube_id}.mp4")
-        target_dir = os.path.join(Directory.mp4_trimmed)
-        ts_path = convert_to_ts(mp4_path, target_dir)
-        video_list.append(ts_path)
-
-    concated_ts_path = os.path.join(Directory.media, f'{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}.ts')
-    ffmpeg.input("concat:" + "|".join(video_list)).output(concated_ts_path, c="copy").run()
-
-    concated_mp4_path = os.path.splitext(concated_ts_path)[0] + ".mp4"
-    ffmpeg.input(concated_ts_path).output(concated_mp4_path, vcodec="libx264", acodec="aac", vf="scale=iw/2:ih/2").run()
-
-
 def create_final_video(chart):
     final_video_paths = [Directory.intro_ts]
     videos = [Video(track) for track in chart.tracks]
