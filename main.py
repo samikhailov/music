@@ -8,14 +8,15 @@ from settings import CHART_LENGTH
 
 if __name__ == "__main__":
     with open('logs.yaml', 'r') as f:
-        config = yaml.safe_load(f.read())
-        logging.config.dictConfig(config)
-    logger = logging.getLogger(__name__)
+        log_cfg = yaml.safe_load(f.read())
+    logging.config.dictConfig(log_cfg)
 
     chart = create_internat_chart(chart_lenght=CHART_LENGTH)
+'''
     chart = update_in_youtube_ids(chart)
     download_videos(chart)
     chart = update_chorus_time(chart)
     trim_videos(chart)
     create_transitions(chart)
     concat_videos(chart)
+'''
