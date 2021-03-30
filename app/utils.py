@@ -34,3 +34,11 @@ def action_log(func):
         return func(*args, **kwargs)
 
     return logger
+
+def action_log_track(func):
+    def logger(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        logging.info(f"{func.__name__}, {self}, result: {result}")
+        return result
+
+    return logger

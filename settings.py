@@ -6,11 +6,12 @@ load_dotenv()
 
 # Video settings
 
-# Количество треков в одном чарте
-CHART_LENGTH = 50
+# Верхняя граница треков в одном чарте
+CHART_LIMIT = 50
 
 # Длина одного трека в итоговом чарте
-ONE_TRACK_LENGTH = 8
+# После изменения удалить все файлы в папке cut_tracks
+CHORUS_LENGTH = 8
 
 
 # Credentials
@@ -30,9 +31,6 @@ class Directory:
     intro_ts = os.path.join(static, "videos", "intro_ts")
 
     media = os.path.join(root, "media")
-    mp3 = os.path.join(media, "mp3")
-    mp4_full = os.path.join(media, "mp4_full")
-    mp4_transitions = os.path.join(media, "mp4_transitions")
-    mp4_trimmed = os.path.join(media, "mp4_trimmed")
-    ts_transitions = os.path.join(media, "ts_transitions")
-    ts_trimmed = os.path.join(media, "ts_trimmed")
+    full_tracks = os.path.join(media, "full_tracks")
+    cut_tracks = os.path.join(media, "cut_tracks")
+    transitions = os.path.join(media, "transitions")
